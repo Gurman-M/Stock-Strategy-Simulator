@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Stock Strategy Simulator</title>
+    <meta name="description" content="A trading strategy simulater which you can use to learn from (previously) successful trading strategies. Although these may not work today, they can be used as a learning tool to see what kind of data is key to observe when creating successful trading algorithms."/>
+    <link rel="icon" href="../img/3954758.png">
+    <!-- Pico.css -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.classless.min.css"
+    />
+    <style>
+      table {
+          width: 100%;
+          border-collapse: collapse;
+      }
+      th, td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: left;
+      }
+      th {
+          background-color: rgb(45, 142, 202);
+          color: #f2f2f2; /* Change font color to light blue */
+      }
+  </style>
+  </head>
+
+  <body>
+    <!-- Header -->
+    <header>
+      <hgroup>
+        <h1>Dogs of Dow Strategy</h1>
+        <br>
+        <p>
+            This simulation shows potential returns in using the dogs of dow trading strategy to invest in multiple companies.
+        </p>
+      </hgroup>
+      <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="single_stock.html">Single Stock Investing</a></li>
+            <li><a href="mixed_invest.html">Mixed Stock Investing</a></li>
+            <li><a href="turtle_trading.html">Turtle Trading Strategy</a></li>
+            <li><a href="dogs_of_dow.html">Dogs of Dow Strategy</a></li>
+        </ul>
+      </nav>
+    </header>
+    <!-- ./ Header -->
+
+    <!-- Main -->
+    <main>
+      <section id="simulator">
+        <h3>Description</h3>
+        <!-- Blockquote-->
+        <blockquote>
+            The Dogs of the Dow strategy involves investing in the ten highest-yielding stocks in the 
+            Dow Jones Industrial Average at the beginning of each year. The idea is that these stocks, 
+            often undervalued, have the potential for price appreciation while providing attractive 
+            dividend yields. By focusing on these "dogs," investors aim to benefit from both income 
+            through dividends and capital gains as the stocks rebound. In short, investors try to find
+            established companies to invest in at bargain prices. However, this strategy can be
+            employed to include companies outside of the Dow. Use the add/remove tickers fields 
+            to add and remove potential companies from the database.
+        </blockquote>
+      </section>
+      
+      <article id="tickers">
+      </article>
+      
+      <button type="submit" id="update">Update Ticker List</button>
+        <!-- Preview -->
+        <section id="simulator">
+          <h3>Simulator</h3>
+          <p>
+            Enter a valid ticker, starting date for investing, end date, inital investment, 
+          </p>
+          <form>
+            <p>Start Year</p>
+            <input
+                type="number"
+                name="start"
+                id="start"
+                placeholder="2020"
+                aria-label="start"
+                required
+            />
+            <p>End Year</p>
+            <input
+                type="number"
+                name="end"
+                id="end"
+                placeholder="2023"
+                aria-label="end"
+                required
+            />
+            <p>Initial Investment</p>
+            <input
+                type="number"
+                name="initial"
+                id="initial"
+                placeholder="1000"
+                aria-label="initial"
+                required
+            />
+            <p>Yearly Contribution</p>
+            <input
+                type="number"
+                name="yearly"
+                id="yearly"
+                placeholder="0"
+                aria-label="yearly"
+                required
+            />
+            <p>Number of Dogs</p>
+            <input
+                type="number"
+                name="dogs"
+                id="dogs"
+                placeholder="10"
+                aria-label="dogs"
+                required
+            />
+          </form>
+          <button type="submit" id="run_mixed">Run</button>
+            <!-- Progress -->
+            <section id="progress" style="display: none;">
+                <progress id="progress-2"></progress>
+            </section>
+        </section>
+        <section id="result">
+        </section>
+    </main>
+
+    <script>
+        window.onload = get_tickers;
+        document.getElementById('run_mixed').onclick = async function() {
+            // ticker, start_date, end_date, initial_balance, risk_percent, high_days, loss_days
+            const arg1 = document.getElementById('start').value;
+            const arg2 = document.getElementById('end').value;
+            const arg3 = document.getElementById('initial').value;
+            const arg4 = document.getElementById('yearly').value;
+            const arg5 = document.getElementById('dogs').value;
+
+            const section = document.getElementById('progress');
+            const btn = document.getElementById('run_mixed');
+
+            section.style.display = 'block'; // Change to 'block' to show the section
+            btn.style.display = 'none';
+
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5000/dow', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ arg1, arg2, arg3, arg4, arg5}) // Send arguments as JSON
+                });
+
+                const data = await response.json();
+                console.log(data)
+                var result = document.getElementById('result');
+                result.innerText = "";
+                // portfolio_table, performers_table, total_return, annualized_return
+                const tableHTML = '<h3>Portfolio Perfomance</h3>' + data['portfolio_table'] + '<h3>Ranked Performers</h3>' + data['performers_table'] + `
+                <table>
+                    <tr>
+                        <th><strong>Metrics</strong></th>
+                        <th><strong>Value</strong></th>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Total Return</ins></strong></td>
+                        <td>${data["total_return"]}%</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Annualized Return</ins></strong></td>
+                        <td>${data["annualized_return"]}%</td>
+                    </tr>
+                </table>
+                
+                `;
+                result.innerHTML = tableHTML;
+            } finally {
+                section.style.display = 'none'; // Change back to 'none' to hide the section
+                btn.style.display = 'block';
+            }
+        };
+
+
+        async function get_tickers() {
+          const response = await fetch('http://127.0.0.1:5000/get_tickers', {
+              method: 'GET',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+          });
+
+          const data = await response.json();
+          const tickers = document.getElementById('tickers');
+          console.log(data["tickers"])
+          const formattedData = `[${data["tickers"].join(', ')}]`;
+          console.log(formattedData)
+          tickers.innerHTML = `<h3>Current Tickers</h3><p>The top N stocks will be picked from this group of tickers to hold for 1 year.</p> 
+          <p>${formattedData}</p><br>
+          <form>
+            <p> Add Ticker To Ticker List </p>
+            <input
+                type="text"
+                name="add"
+                id="add"
+                placeholder="Ticker to Add"
+                aria-label="add"
+            />
+            <p>Remove Ticker From List</p>
+            <input
+                type="text"
+                name="remove"
+                id="remove"
+                placeholder="Ticker to Remove"
+                aria-label="remove"
+            />
+          </form>
+          `;
+      }
+
+      document.getElementById('update').onclick = async function() {
+        console.log("found")
+        const add = document.getElementById('add').value;
+        const remove = document.getElementById('remove').value;
+
+        try {
+            const response = await fetch('http://127.0.0.1:5000/update_tickers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ add, remove}) // Send arguments as JSON
+            });
+        } finally {
+          get_tickers();
+        }
+    };
+    </script>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Stock Strategy Simulator</title>
+    <meta name="description" content="A trading strategy simulater which you can use to learn from (previously) successful trading strategies. Although these may not work today, they can be used as a learning tool to see what kind of data is key to observe when creating successful trading algorithms."/>
+    <link rel="icon" href="../img/3954758.png">
+    <!-- Pico.css -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.classless.min.css"
+    />
+    <style>
+      table {
+          width: 100%;
+          border-collapse: collapse;
+      }
+      th, td {
+          border: 1px solid #ddd;
+          padding: 8px;
+          text-align: left;
+      }
+      th {
+          background-color: rgb(45, 142, 202);
+          color: #f2f2f2; /* Change font color to light blue */
+      }
+  </style>
+  </head>
+
+  <body>
+    <!-- Header -->
+    <header>
+      <hgroup>
+        <h1>Multiple Stock Investing</h1>
+        <br>
+        <p>
+            This simulation shows potential returns for investing in 2 companies over some period of time.
+            Enter 2 valid tickers and other necessary information. Keep in mind that returns do not account for taxes or broker fees.
+        </p>
+      </hgroup>
+      <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="single_stock.html">Single Stock Investing</a></li>
+            <li><a href="mixed_invest.html">Mixed Stock Investing</a></li>
+            <li><a href="turtle_trading.html">Turtle Trading Strategy</a></li>
+            <li><a href="dogs_of_dow.html">Dogs of Dow Strategy</a></li>
+        </ul>
+      </nav>
+    </header>
+    <!-- ./ Header -->
+
+    <!-- Main -->
+    <main>
+      <section id="simulator">
+        <h3>Description</h3>
+        <!-- Blockquote-->
+        <blockquote>
+            Investing in multiple tickers enhances diversification; index 
+            funds offers broad market exposure with lower costs 
+            and historically consistent performance, while bonds provide stability and regular income. 
+            A common asset allocation strategy suggests investing a percentage of your age in 
+            stocks (e.g., 30% if you're 30) and the remainder in bonds, or using the "age minus 10" or 
+            "age minus 20" rule for a balanced approach to risk and return.
+        </blockquote>
+      </section>
+        <!-- Preview -->
+        <section id="simulator">
+          <h3>Simulator</h3>
+          <p>
+            Enter a valid ticker for each company field, starting date for investing, end date, inital investment, percentage of portfolio to allocate to first stock, and your monthly contribution.
+          </p>
+          <form>
+            <input
+              type="text"
+              name="symbol"
+              id="ticker_one"
+              placeholder="Ticker 1 (ex. VOO)"
+              aria-label="Ticker 1 (ex. VOO)"
+              required
+            />
+            <input
+            type="text"
+            name="symbol"
+            id="ticker_two"
+            placeholder="Ticker 2 (ex. VBTLX)"
+            aria-label="Ticker 2 (ex. VBTLX)"
+            required
+            />
+            <!-- Date-->
+            <label for="date"
+                >Start Date
+                <input type="date" id="startdate" name="startdate" />
+            </label>
+            <!-- Date-->
+            <label for="date"
+                >End Date
+                <input type="date" id="enddate" name="enddate" />
+            </label>
+            <p>Initial Investment</p>
+            <input
+                type="number"
+                name="investment"
+                id="investment_single"
+                placeholder="1000"
+                aria-label="Investment"
+                required
+            />
+            <p>Monthly Contribution</p>
+            <input
+                type="number"
+                name="contribution"
+                id="contribution_single"
+                placeholder="100"
+                aria-label="Monthly Contribution"
+                required
+            />
+            <p>Allocation (As Decimal)</p>
+            <input
+                type="number"
+                name="contribution"
+                id="allocation"
+                placeholder="0.5"
+                aria-label="Allocation"
+                required
+            />
+          </form>
+          <button type="submit" id="run_mixed">Run</button>
+            <!-- Progress -->
+            <section id="progress" style="display: none;">
+                <progress id="progress-2"></progress>
+            </section>
+        </section>
+
+
+        <section id="result">
+        </section>
+    </main>
+
+    <script>
+      // start_date, end_date, investment, stock_one, stock_two, monthly, allocation, buy_date, sell_date
+        document.getElementById('run_mixed').onclick = async function() {
+            const arg1 = document.getElementById('startdate').value;
+            const arg2 = document.getElementById('enddate').value;
+            const arg3 = document.getElementById('investment_single').value;
+            const arg4 = document.getElementById('ticker_one').value;
+            const arg5 = document.getElementById('ticker_two').value;
+            const arg6 = document.getElementById('contribution_single').value;
+            const arg7 = document.getElementById('allocation').value;
+
+            const section = document.getElementById('progress');
+            const btn = document.getElementById('run_mixed');
+
+            section.style.display = 'block'; // Change to 'block' to show the section
+            btn.style.display = 'none';
+
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5000/mixed_stocks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ arg1, arg2, arg3, arg4, arg5, arg6, arg7}) // Send arguments as JSON
+                });
+
+                const data = await response.json();
+                const stock_one = document.getElementById("ticker_one").value
+                const stock_two = document.getElementById("ticker_two").value
+                console.log(data)
+                var result = document.getElementById('result');
+                result.innerText = "";
+                const tableHTML = `
+                  <table>
+                    <tr>
+                        <th><strong>Metrics for ${stock_one}</strong></th>
+                        <th><strong>Value</strong></th>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Starting Buy Date</ins></strong></td>
+                        <td>${data["buy_date_one"]}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Sell Date</ins></strong></td>
+                        <td>${data["sell_date_one"]}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Starting Buy</ins></strong></td>
+                        <td>$${data["start_one"]}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Sell Price</ins></strong></td>
+                        <td>$${data["end_one"]}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Total Shares Owned</ins></strong></td>
+                        <td>${data["total_shares_one"]}</td>
+                    </tr>
+                  </table>
+                  <table>
+                    <tr>
+                        <th><strong>Metrics for ${stock_two}</strong></th>
+                        <th><strong>Value</strong></th>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Starting Buy Date</ins></strong></td>
+                        <td>${data["buy_date_two"]}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Sell Date</ins></strong></td>
+                        <td>${data["sell_date_two"]}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Starting Buy</ins></strong></td>
+                        <td>$${data["start_two"]}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Sell Price</ins></strong></td>
+                        <td>$${data["end_two"]}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Total Shares Owned</ins></strong></td>
+                        <td>${data["total_shares_two"]}</td>
+                    </tr>
+                  </table>
+                <table>
+                    <tr>
+                        <th><strong>Other Metrics</strong></th>
+                        <th><strong>Value</strong></th>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Total Contribution</ins></strong></td>
+                        <td>$${data["contribution"]}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Total Portfolio Value After Sell</ins></strong></td>
+                        <td>$${data["total cash"]}</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Total Return</ins></strong></td>
+                        <td>${data["total return"]}%</td>
+                    </tr>
+                    <tr>
+                        <td><strong><ins>Annualized Return</ins></strong></td>
+                        <td>${data["annualized"]}%</td>
+                    </tr>
+                </table>`;
+                result.innerHTML = tableHTML;
+            } finally {
+                section.style.display = 'none'; // Change back to 'none' to hide the section
+                btn.style.display = 'block';
+            }
+        };
+    </script>
+</html>
